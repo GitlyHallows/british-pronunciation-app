@@ -27,7 +27,7 @@ let parsedSupabaseServer: z.infer<typeof supabaseServerSchema> | null = null;
 let parsedAws: z.infer<typeof awsSchema> | null = null;
 let parsedApp: z.infer<typeof appSchema> | null = null;
 
-function parseWith<T extends z.ZodTypeAny>(schema: T, source: NodeJS.ProcessEnv): z.infer<T> {
+function parseWith<T extends z.ZodTypeAny>(schema: T, source: unknown): z.infer<T> {
   const result = schema.safeParse(source);
   if (!result.success) {
     const issues = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
@@ -38,7 +38,11 @@ function parseWith<T extends z.ZodTypeAny>(schema: T, source: NodeJS.ProcessEnv)
 
 export function getSupabasePublicEnv() {
   if (!parsedSupabasePublic) {
-    parsedSupabasePublic = parseWith(supabasePublicSchema, process.env);
+    // Next.js only exposes NEXT_PUBLIC_* vars in client bundles when referenced directly.
+    parsedSupabasePublic = parseWith(supabasePublicSchema, {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    });
   }
   return parsedSupabasePublic;
 }
