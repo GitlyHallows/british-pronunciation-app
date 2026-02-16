@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAllowedEmails } from "@/lib/env";
+import { getAllowedEmails, isSupabaseConfigured } from "@/lib/env";
 
 export type AuthContext = {
   userId: string;
@@ -15,11 +15,27 @@ function ensureAllowlisted(email: string | undefined | null) {
   return allow.includes(email.toLowerCase());
 }
 
+async function getCurrentUser() {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+    return user;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Invalid environment variables")) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function requireAuthForPage(): Promise<AuthContext> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user || !ensureAllowlisted(user.email)) {
     redirect("/login");
@@ -29,10 +45,7 @@ export async function requireAuthForPage(): Promise<AuthContext> {
 }
 
 export async function requireAuthForRoute(): Promise<AuthContext> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user || !ensureAllowlisted(user.email)) {
     throw new Error("UNAUTHORIZED");
@@ -42,10 +55,7 @@ export async function requireAuthForRoute(): Promise<AuthContext> {
 }
 
 export async function getOptionalAuthForPage(): Promise<AuthContext | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user || !ensureAllowlisted(user.email)) {
     return null;

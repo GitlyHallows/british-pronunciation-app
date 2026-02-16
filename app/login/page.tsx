@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 import { getOptionalAuthForPage } from "@/lib/auth";
+import { isSupabaseConfigured } from "@/lib/env";
 import { GoogleSignInButton } from "@/components/google-signin-button";
 
 export default async function LoginPage() {
   const auth = await getOptionalAuthForPage();
+  const supabaseConfigured = isSupabaseConfigured();
+
   if (auth) {
     redirect("/practice/struggles");
   }
@@ -20,8 +23,14 @@ export default async function LoginPage() {
         <p className="mt-3 text-sm text-slate-600">
           Sign in with Google. Only your allowlisted email can access the app.
         </p>
+        {!supabaseConfigured ? (
+          <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Supabase auth is not configured in this deployment yet. Add the required Vercel environment variables
+            to enable login.
+          </p>
+        ) : null}
         <div className="mt-6">
-          <GoogleSignInButton />
+          <GoogleSignInButton enabled={supabaseConfigured} />
         </div>
       </section>
     </main>
