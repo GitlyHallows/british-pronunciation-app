@@ -1,0 +1,21 @@
+{
+  "name": "Accent Practice Lab",
+  "short_name": "Accent Lab",
+  "description": "Modern RP practice workspace with sentence decks and recording annotations.",
+  "start_url": "/practice/struggles",
+  "display": "standalone",
+  "background_color": "#eef6ff",
+  "theme_color": "#16a394",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
