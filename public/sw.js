@@ -1,11 +1,22 @@
-const CACHE_NAME = "british-pronunciation-shell-v1";
-const SHELL_ASSETS = ["/", "/login", "/manifest.webmanifest"];
+const CACHE_NAME = "british-pronunciation-static-v2";
+const STATIC_ASSETS = ["/manifest.webmanifest", "/icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        STATIC_ASSETS.map((asset) =>
+          fetch(asset, { cache: "no-store" })
+            .then((response) => {
+              if (response.ok) {
+                return cache.put(asset, response.clone());
+              }
+              return null;
+            })
+            .catch(() => null)
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
@@ -35,19 +46,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match("/"));
-    })
-  );
+  // Never cache-route HTML navigations. Always fetch live app content.
+  if (event.request.mode === "navigate") {
+    return;
+  }
+
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    STATIC_ASSETS.includes(url.pathname);
+
+  if (!isStaticAsset) {
+    return;
+  }
+
+  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
