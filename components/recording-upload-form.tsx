@@ -11,6 +11,7 @@ type PresignUploadResponse = {
 export function RecordingUploadForm() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [description, setDescription] = useState("");
   const [speakingWith, setSpeakingWith] = useState("");
   const [recordedAt, setRecordedAt] = useState(() => toLocalDateTimeInput(new Date()));
@@ -38,7 +39,7 @@ export function RecordingUploadForm() {
       });
 
       if (!presignResponse.ok) {
-        throw new Error("Unable to create upload URL");
+        throw new Error(await readErrorMessage(presignResponse, "Unable to create upload URL"));
       }
 
       const presigned = (await presignResponse.json()) as PresignUploadResponse;
@@ -52,7 +53,7 @@ export function RecordingUploadForm() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error("Upload to S3 failed");
+        throw new Error(`Upload to S3 failed (${uploadResponse.status})`);
       }
 
       const completeResponse = await fetch("/api/v1/recordings/complete-upload", {
@@ -70,10 +71,11 @@ export function RecordingUploadForm() {
       });
 
       if (!completeResponse.ok) {
-        throw new Error("Unable to finalize recording");
+        throw new Error(await readErrorMessage(completeResponse, "Unable to finalize recording"));
       }
 
       setFile(null);
+      setFileInputKey((value) => value + 1);
       setDescription("");
       setSpeakingWith("");
       setRecordedAt(toLocalDateTimeInput(new Date()));
@@ -92,8 +94,13 @@ export function RecordingUploadForm() {
       <label className="grid gap-1 text-sm text-slate-700">
         Recording file
         <input
+          key={fileInputKey}
           type="file"
           accept="audio/*"
+          onClick={(event) => {
+            // Allow picking the same file again after an upload attempt.
+            event.currentTarget.value = "";
+          }}
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2"
           required
@@ -151,4 +158,17 @@ function toLocalDateTimeInput(value: Date) {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(
     value.getMinutes()
   )}`;
+}
+
+async function readErrorMessage(response: Response, fallback: string) {
+  try {
+    const payload = (await response.json()) as { error?: string };
+    if (payload?.error) {
+      return `${fallback}: ${payload.error}`;
+    }
+  } catch {
+    // Ignore invalid JSON and return fallback.
+  }
+
+  return `${fallback} (${response.status})`;
 }
