@@ -42,6 +42,18 @@ export type PracticeCardTag = {
   created_at: string;
 };
 
+export type PracticeSetPreviewCardItem = {
+  id: string;
+  order_index: number;
+  sentence: string;
+};
+
+export type PracticeSetPreviewResponse = {
+  set_id: string;
+  cards: PracticeSetPreviewCardItem[];
+  total_cards: number;
+};
+
 export type Recording = {
   id: string;
   user_id: string;

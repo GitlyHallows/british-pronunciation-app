@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { requireAuthForPage } from "@/lib/auth";
+import { PracticeSetPreviewCard } from "@/components/practice-set-preview-card";
 import { getMiscPracticeSets } from "@/lib/data";
 import { formatLocalDate } from "@/lib/time";
 
@@ -27,15 +27,7 @@ export default async function MiscPage() {
             </header>
             <div className="grid gap-3 md:grid-cols-2">
               {setsForDate.map((set) => (
-                <Link
-                  key={set.id}
-                  href={`/practice/sets/${set.id}`}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-teal/40 hover:bg-teal-soft"
-                >
-                  <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Set {set.set_index}</p>
-                  <p className="mt-1 font-semibold text-slate-900">{set.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">Source: {set.source}</p>
-                </Link>
+                <PracticeSetPreviewCard key={set.id} set={set} />
               ))}
             </div>
           </section>

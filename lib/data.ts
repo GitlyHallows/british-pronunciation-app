@@ -1,5 +1,13 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { PracticeCard, PracticeSet, Recording, RecordingAnnotation, Struggle } from "@/lib/types";
+import type {
+  PracticeCard,
+  PracticeSet,
+  PracticeSetPreviewCardItem,
+  PracticeSetPreviewResponse,
+  Recording,
+  RecordingAnnotation,
+  Struggle
+} from "@/lib/types";
 
 export async function getStrugglesForUser(userId: string): Promise<Struggle[]> {
   const supabase = await createSupabaseServerClient();
@@ -127,6 +135,45 @@ export async function getSetDetails(userId: string, setId: string) {
     set: setData as PracticeSet & { struggles?: { id: string; title: string } | null },
     cards: (cards ?? []) as PracticeCard[],
     tags
+  };
+}
+
+export async function getPracticeSetPreview(
+  userId: string,
+  setId: string,
+  limit = 3
+): Promise<PracticeSetPreviewResponse | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data: setData, error: setError } = await supabase
+    .from("practice_sets")
+    .select("id")
+    .eq("id", setId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (setError) {
+    throw setError;
+  }
+
+  if (!setData) {
+    return null;
+  }
+
+  const { data: cards, error: cardsError, count } = await supabase
+    .from("practice_cards")
+    .select("id, order_index, sentence", { count: "exact" })
+    .eq("set_id", setId)
+    .order("order_index", { ascending: true })
+    .limit(limit);
+
+  if (cardsError) {
+    throw cardsError;
+  }
+
+  return {
+    set_id: setId,
+    cards: (cards ?? []) as PracticeSetPreviewCardItem[],
+    total_cards: count ?? cards?.length ?? 0
   };
 }
 
