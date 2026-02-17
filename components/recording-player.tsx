@@ -19,6 +19,7 @@ export function RecordingPlayer({ recordingId, initialAnnotations }: RecordingPl
   const waveformRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const regionsRef = useRef<any>(null);
+  const rangePlaybackEndRef = useRef<number | null>(null);
 
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -70,7 +71,20 @@ export function RecordingPlayer({ recordingId, initialAnnotations }: RecordingPl
       });
 
       ws.on("play", () => setPlaying(true));
-      ws.on("pause", () => setPlaying(false));
+      ws.on("pause", () => {
+        setPlaying(false);
+        rangePlaybackEndRef.current = null;
+      });
+      ws.on("timeupdate", (currentTime: number) => {
+        const stopAt = rangePlaybackEndRef.current;
+        if (stopAt === null) return;
+
+        if (currentTime >= stopAt) {
+          ws.pause();
+          ws.setTime(stopAt);
+          rangePlaybackEndRef.current = null;
+        }
+      });
 
       regions.on("region-created", (region: any) => {
         if (region.id.startsWith("persisted-")) {
@@ -181,7 +195,16 @@ export function RecordingPlayer({ recordingId, initialAnnotations }: RecordingPl
   function jumpTo(annotation: RecordingAnnotation) {
     const ws = wavesurferRef.current;
     if (!ws || !ready) return;
-    ws.setTime(Number(annotation.start_sec));
+
+    const start = Number(annotation.start_sec);
+    const end = Number(annotation.end_sec);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      return;
+    }
+
+    rangePlaybackEndRef.current = end;
+    ws.setTime(start);
     ws.play();
   }
 
