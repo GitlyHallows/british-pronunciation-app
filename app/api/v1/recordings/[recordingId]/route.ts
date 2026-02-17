@@ -3,6 +3,7 @@ import { requireAuthForRoute } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fail, handleRouteError, ok } from "@/lib/http";
 import { toLondonDateBucket } from "@/lib/time";
+import { deleteObjectFromS3 } from "@/lib/s3";
 
 const updateSchema = z.object({
   description: z.string().max(2000).optional(),
@@ -57,10 +58,29 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ recordi
     const auth = await requireAuthForRoute();
     const supabase = await createSupabaseServerClient();
 
-    const { error } = await supabase.from("recordings").delete().eq("id", recordingId).eq("user_id", auth.userId);
-    if (error) throw error;
+    const { data: deleted, error } = await supabase
+      .from("recordings")
+      .delete()
+      .eq("id", recordingId)
+      .eq("user_id", auth.userId)
+      .select("s3_key")
+      .maybeSingle();
 
-    return ok({ deleted: true });
+    if (error) throw error;
+    if (!deleted) {
+      return fail("Recording not found", 404);
+    }
+
+    // Best effort object cleanup. DB row is already deleted at this point.
+    let s3Deleted = true;
+    try {
+      await deleteObjectFromS3({ key: deleted.s3_key });
+    } catch (s3Error) {
+      s3Deleted = false;
+      console.error("Failed to delete recording object from S3", s3Error);
+    }
+
+    return ok({ deleted: true, s3Deleted });
   } catch (error) {
     return handleRouteError(error);
   }

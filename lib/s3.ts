@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getAwsEnv } from "@/lib/env";
 
@@ -45,4 +45,14 @@ export async function createDownloadUrl(params: { key: string }) {
   });
 
   return { downloadUrl };
+}
+
+export async function deleteObjectFromS3(params: { key: string }) {
+  const env = getAwsEnv();
+  const command = new DeleteObjectCommand({
+    Bucket: env.AWS_S3_BUCKET,
+    Key: params.key
+  });
+
+  await getClient().send(command);
 }
