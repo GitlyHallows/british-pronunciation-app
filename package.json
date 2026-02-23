@@ -11,6 +11,7 @@
     "seed:check": "tsx scripts/verify-seed.ts",
     "import:pdf": "tsx scripts/import-pdf-misc.ts",
     "generate:struggles": "tsx scripts/generate-struggle-sets.ts",
+    "generate:struggles:variety": "tsx scripts/generate-struggle-variety-sets.ts",
     "add:set": "tsx scripts/add-practice-set.ts"
   },
   "dependencies": {
