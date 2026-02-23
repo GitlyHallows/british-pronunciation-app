@@ -895,8 +895,12 @@ function generateVarietyCards(
     const context = CONTEXTS[(attempt * 5 + 2) % CONTEXTS.length];
     const cueA = cuePool[attempt % cuePool.length];
     let cueB = cuePool[(attempt * 7 + 3) % cuePool.length];
-    if (cueA === cueB) {
-      cueB = cuePool[(attempt * 11 + 5) % cuePool.length];
+    if (cuePool.length > 1) {
+      let guard = 0;
+      while (cueA === cueB && guard < cuePool.length) {
+        cueB = cuePool[(attempt * 11 + 5 + guard) % cuePool.length];
+        guard += 1;
+      }
     }
 
     const sentence = buildSentence({
@@ -927,7 +931,14 @@ function generateVarietyCards(
   while (cards.length < count) {
     const fallbackIndex = cards.length;
     const cueA = cuePool[fallbackIndex % cuePool.length];
-    const cueB = cuePool[(fallbackIndex * 3 + 1) % cuePool.length];
+    let cueB = cuePool[(fallbackIndex * 3 + 1) % cuePool.length];
+    if (cuePool.length > 1) {
+      let guard = 0;
+      while (cueA === cueB && guard < cuePool.length) {
+        cueB = cuePool[(fallbackIndex * 5 + 2 + guard) % cuePool.length];
+        guard += 1;
+      }
+    }
     const subject = SUBJECTS[fallbackIndex % SUBJECTS.length];
     const sentence = `${subject} repeated ${cueA}, then ${cueB}, in take ${fallbackIndex + 1} to lock the pattern.`;
 
@@ -1033,6 +1044,7 @@ function resolveProfile(title: string, description: string): FocusProfile {
 
 function extractQuotedCues(description: string): string[] {
   const cues: string[] = [];
+  const blockedSingles = new Set(["our", "and", "the", "for", "to", "in", "it", "my", "a", "an"]);
   const regex = /["“]([^"”]{2,80})["”]/g;
 
   let match: RegExpExecArray | null = regex.exec(description);
@@ -1040,8 +1052,15 @@ function extractQuotedCues(description: string): string[] {
     const cleaned = match[1]
       .replace(/[()]/g, " ")
       .replace(/\s+/g, " ")
+      .replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "")
+      .replace(/[.,;:!?]+$/g, "")
       .trim();
-    if (cleaned && cleaned.split(" ").length <= 6) {
+
+    const lowered = cleaned.toLowerCase();
+    const parts = lowered.split(/\s+/).filter(Boolean);
+    const isBlockedSingle = parts.length === 1 && blockedSingles.has(parts[0]);
+
+    if (!isBlockedSingle && cleaned && parts.length <= 6) {
       cues.push(cleaned.toLowerCase());
     }
     match = regex.exec(description);
@@ -1063,31 +1082,31 @@ function buildSentence(params: {
   const template = index % 8;
 
   if (template === 0) {
-    return `${subject} ${action} ${cueA} and then ${cueB} ${context}.`;
+    return `${subject} ${action} "${cueA}" and then "${cueB}" ${context}.`;
   }
   if (template === 1) {
-    return `During this round, ${subject} kept ${cueA} smooth before repeating ${cueB} ${context}.`;
+    return `During this round, ${subject} kept "${cueA}" smooth before repeating "${cueB}" ${context}.`;
   }
   if (template === 2) {
-    return `${subject} read ${cueA} aloud, followed it with ${cueB}, and checked ${focusLabel} ${context}.`;
+    return `${subject} read "${cueA}" aloud, followed it with "${cueB}", and checked ${focusLabel} ${context}.`;
   }
   if (template === 3) {
-    return `${subject} switched from ${cueA} to ${cueB} ${context} without pausing.`;
+    return `${subject} switched from "${cueA}" to "${cueB}" ${context} without pausing.`;
   }
   if (template === 4) {
-    return `In one breath, ${subject} said ${cueA}, then ${cueB}, to lock in ${focusLabel} ${context}.`;
+    return `In one breath, ${subject} said "${cueA}", then "${cueB}", to lock in ${focusLabel} ${context}.`;
   }
   if (template === 5) {
-    return `${subject} repeated ${cueA} at slow speed, then delivered ${cueB} at natural speed ${context}.`;
+    return `${subject} repeated "${cueA}" at slow speed, then delivered "${cueB}" at natural speed ${context}.`;
   }
   if (template === 6) {
-    return `For clarity, ${subject} alternated ${cueA} with ${cueB} ${context}.`;
+    return `For clarity, ${subject} alternated "${cueA}" with "${cueB}" ${context}.`;
   }
-  return `${subject} finished the drill by using ${cueA} and ${cueB} ${context}.`;
+  return `${subject} finished the drill by using "${cueA}" and "${cueB}" ${context}.`;
 }
 
 function toStressMap(sentence: string, cueA: string, cueB: string) {
-  const stressed = sentence.replace(/[.,!?]/g, "");
+  const stressed = sentence.replace(/[.,!?"]/g, "");
   const emphasize = dedupe(
     [...cueA.split(/\s+/), ...cueB.split(/\s+/)].map((word) =>
       word
