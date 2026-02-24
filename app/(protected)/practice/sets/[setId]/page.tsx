@@ -16,15 +16,6 @@ export default async function PracticeSetPage({ params }: { params: Promise<{ se
     notFound();
   }
 
-  const tagMap = new Map<string, string[]>();
-  for (const tag of data.tags) {
-    const existing = tagMap.get(tag.card_id) ?? [];
-    if (tag.struggles?.title) {
-      existing.push(tag.struggles.title);
-    }
-    tagMap.set(tag.card_id, existing);
-  }
-
   return (
     <section className="space-y-5">
       <header className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -52,20 +43,8 @@ export default async function PracticeSetPage({ params }: { params: Promise<{ se
 
       <div className="grid gap-4 xl:grid-cols-2">
         {data.cards.map((card) => (
-          <div key={card.id} className="space-y-2">
+          <div key={card.id}>
             <SentenceCard card={card} indexLabel={String(card.order_index).padStart(2, "0")} />
-            {(tagMap.get(card.id) ?? []).length > 0 ? (
-              <div className="flex flex-wrap gap-2 px-1">
-                {(tagMap.get(card.id) ?? []).map((title) => (
-                  <span
-                    key={`${card.id}-${title}`}
-                    className="rounded-full border border-teal/30 bg-teal-soft px-2.5 py-1 text-xs font-medium text-teal"
-                  >
-                    {title}
-                  </span>
-                ))}
-              </div>
-            ) : null}
           </div>
         ))}
       </div>
