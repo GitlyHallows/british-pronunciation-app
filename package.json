@@ -12,6 +12,7 @@
     "import:pdf": "tsx scripts/import-pdf-misc.ts",
     "generate:struggles": "tsx scripts/generate-struggle-sets.ts",
     "generate:struggles:variety": "tsx scripts/generate-struggle-variety-sets.ts",
+    "backfill:struggles:variety:ipa": "tsx scripts/backfill-variety-ipa.ts",
     "add:set": "tsx scripts/add-practice-set.ts"
   },
   "dependencies": {

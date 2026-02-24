@@ -47,6 +47,7 @@ When creating any new sentence set for this app, follow the same style as the ex
 - `stress_map`
 - `intonation_text`
 - `contour_pattern`
+- IPA must be Modern RP (non-rhotic, LOT /ɒ/, BATH /ɑː/, modern weak forms), aligned with `/Users/lalit/Videos/Courses/English_with_Lucy_British_pronunciation/knowledge.md`.
 - Keep output render-compatible with the existing set card UI (`SentenceCard`).
 
 ## Recent UX decisions already implemented

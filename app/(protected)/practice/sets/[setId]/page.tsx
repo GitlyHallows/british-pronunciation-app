@@ -34,6 +34,9 @@ export default async function PracticeSetPage({ params }: { params: Promise<{ se
               {data.set.section_type.toUpperCase()} · Set {data.set.set_index}
             </p>
             <h3 className="mt-1 font-[var(--font-dm-serif)] text-3xl text-ink">{data.set.title}</h3>
+            {data.set.section_type === "struggle" && data.set.struggles?.title ? (
+              <p className="mt-2 text-sm font-medium text-teal">Struggle: {data.set.struggles.title}</p>
+            ) : null}
             <p className="mt-2 text-sm text-slate-600">
               London bucket {data.set.date_bucket_london} · Local display {formatLocalDate(data.set.date_bucket_london)}
             </p>

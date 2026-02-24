@@ -9,6 +9,7 @@ import {
 } from "./_common";
 import { toLondonDateBucket } from "../lib/time";
 import type { PracticeCard } from "../lib/types";
+import { toModernRpSentenceIpa } from "../lib/modern-rp-ipa";
 
 const DEFAULT_CARD_COUNT = 50;
 const DEFAULT_SOURCE = "codex-variety";
@@ -918,7 +919,7 @@ function generateVarietyCards(
       cards.push({
         order_index: cards.length,
         sentence,
-        ipa: `/seed/${profile.id}/${cards.length + 1}/`,
+        ipa: toModernRpSentenceIpa(sentence),
         stress_map: toStressMap(sentence, cueA, cueB),
         intonation_text: `↑→ ${subject} ${action} ${cueA} / ↗ then ${cueB} / ↘ keep ${profile.focusLabel} stable`,
         contour_pattern: cards.length % 2 === 0 ? "rise_fall" : "steady"
@@ -950,7 +951,7 @@ function generateVarietyCards(
     cards.push({
       order_index: fallbackIndex,
       sentence,
-      ipa: `/seed/${profile.id}/${fallbackIndex + 1}/`,
+      ipa: toModernRpSentenceIpa(sentence),
       stress_map: toStressMap(sentence, cueA, cueB),
       intonation_text: `↑→ ${subject} repeated ${cueA} / ↗ then ${cueB} / ↘ keep ${profile.focusLabel} stable`,
       contour_pattern: fallbackIndex % 2 === 0 ? "rise_fall" : "steady"
